@@ -25,22 +25,14 @@ public class EtlController {
     private CsvFileService csvFileService;
 
     @PostMapping("/test")
-    public ResponseEntity loadFtBalanceF() {
+    public ResponseEntity loadData() {
         try {
-            List<String> lst = new ArrayList<>();
-            lst.add("ft_balance_f");
-            lst.add("ft_posting_f");
-            lst.add("md_account_d");
-            lst.add("md_currency_d");
-            lst.add("md_exchange_rate_d");
-            lst.add("md_ledger_account_s");
 
             etlService.loadCsvData();
-            Thread.sleep(5000);
-            etlService.transferData(lst);
-            return ResponseEntity.ok("Данные успешно загружены.");
+
+            return ResponseEntity.ok("Data load successfully.");
         } catch (IOException e) {
-            return ResponseEntity.badRequest().body("Ошибка при загрузке данных: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error to load data: " + e.getMessage());
         } catch (ParseException e) {
             throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
@@ -72,7 +64,7 @@ public class EtlController {
     }
 
     @GetMapping("/import")
-    public String importData(@RequestParam String tableName, @RequestParam String schemaName) {
+    public String importData(@RequestParam String tableName, @RequestParam String schemaName) throws ClassNotFoundException {
         csvFileService.importDataFromCSV(tableName, schemaName);
         return "Data imported successfully!";
     }

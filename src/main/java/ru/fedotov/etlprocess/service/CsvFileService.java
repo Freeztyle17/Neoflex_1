@@ -48,9 +48,9 @@ public class CsvFileService {
     }
 
     public void exportDataToCSV(String tableName, String schemaName) {
-        // Получение названий колонок из базы данных
         String filePath = "src/main/resources/export/"+tableName+".csv";
         String columnsHeader = getColumnNames(tableName, schemaName);
+        etlLoggingService.logProcessStart("Export data to CSV");
 
         try (FileWriter writer = new FileWriter(filePath)) {
 
@@ -78,67 +78,27 @@ public class CsvFileService {
 
         } catch (IOException e) {
             e.printStackTrace();
-            ;
+            etlLoggingService.logProcessError("Export data to CSV", e.getMessage());;
         }
+
+        etlLoggingService.logProcessEnd("Export data to CSV", "SUCCESS");
     }
 
     @Transactional
-    public void importDataFromCSV(String tableName, String schemaName) {
+    public void importDataFromCSV(String tableName, String schemaName) throws ClassNotFoundException {
         String filePath = "src/main/resources/import/" + tableName + ".csv";
+        etlLoggingService.logProcessStart("Import data to CSV");
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+        String versionedTableName = determineTableName(tableName);
 
-            etlLoggingService.logProcessStart("Import data to CSV");
+        createTable(versionedTableName, tableName, schemaName);
 
-            String line;
-            boolean headerSkipped = false; // флаг для пропуска первой строки (заголовка)
+        sendData(filePath, versionedTableName, schemaName);
 
-            while ((line = reader.readLine()) != null) {
-                if (!headerSkipped) {
-                    headerSkipped = true;
-                    continue; // пропускаем первую строку (заголовок)
-                }
-
-                String[] columns = line.split(";");
-
-                for (int i = 0; i < columns.length; i++) {
-                    if (columns[i].isEmpty()) {
-                        columns[i] = null; // заменяем пустую строку на null
-                    }
-                }
-
-                // Формируем SQL-запрос для вставки данных
-                StringBuilder sqlBuilder = new StringBuilder();
-                sqlBuilder.append("INSERT INTO ").append(schemaName).append(".").append(tableName).append(" VALUES (");
-
-                for (int i = 0; i < columns.length; i++) {
-                    if (i > 0) {
-                        sqlBuilder.append(", ");
-                    }
-                    if (columns[i] == null) {
-                        sqlBuilder.append("null"); // вставляем null, если значение равно null
-                    } else if (isNumeric(columns[i])) {
-                        sqlBuilder.append(columns[i]); // если числовое значение
-                    } else {
-                        sqlBuilder.append("'").append(columns[i]).append("'"); // если строковое значение
-                    }
-                }
-
-                sqlBuilder.append(")");
-
-                // Выполняем SQL-запрос
-                entityManager.createNativeQuery(sqlBuilder.toString()).executeUpdate();
-            }
-
-            System.out.println("Данные успешно импортированы из CSV в таблицу " + tableName);
-            etlLoggingService.logProcessEnd("Import data to CSV", "SUCCESS");
-        } catch (IOException e) {
-            etlLoggingService.logProcessError("Import data Failed ", e.getMessage());
-            e.printStackTrace();
-        }
+        etlLoggingService.logProcessEnd("Import data to CSV", "SUCCESS");
     }
 
-    // Метод для проверки, является ли строка числом
+
     private boolean isNumeric(String str) {
         if (str == null) {
             return false;
@@ -150,19 +110,17 @@ public class CsvFileService {
         List<PostingSummary> summaries = repository.getCreditDebitSummary(date);
 
         if (summaries.isEmpty()) {
-            // Если список summaries пуст, можно выбросить исключение или выполнить другие действия
             throw new IllegalArgumentException("No data found for the given date: " + date);
         }
 
-        // Получаем заголовки столбцов из первого элемента списка summaries
         PostingSummary firstSummary = summaries.get(0);
         Field[] fields = PostingSummary.class.getDeclaredFields();
 
         try (FileWriter writer = new FileWriter("src/main/resources/export/posting_summary.csv")) {
-            // Write CSV header
+
             writer.append(String.join(";", getFieldNames(fields))).append("\n");
 
-            // Write CSV data
+
             for (PostingSummary summary : summaries) {
                 writer.append(String.join(";", getFieldValues(fields, summary))).append("\n");
             }
@@ -180,7 +138,6 @@ public class CsvFileService {
         return fieldNames.toArray(new String[0]);
     }
 
-    // Вспомогательный метод для получения значений полей
     private String[] getFieldValues(Field[] fields, PostingSummary summary) throws IllegalAccessException {
         List<String> fieldValues = new ArrayList<>();
         for (Field field : fields) {
@@ -194,33 +151,97 @@ public class CsvFileService {
         Query query = entityManager.createNativeQuery(
                 "SELECT column_name " +
                         "FROM information_schema.columns " +
-                        "WHERE table_schema = :schemaName " +  // схема таблицы
-                        "AND table_name = :tableName"); // название таблицы
+                        "WHERE table_schema = :schemaName " +
+                        "AND table_name = :tableName");
         query.setParameter("schemaName", schemaName);
         query.setParameter("tableName", tableName);
         List<String> columns = query.getResultList();
-        return String.join(",", columns);
+        return String.join(";", columns);
     }
 
+    public String convertTableNameToClassName(String tableName) {
+        // Разбиваем имя таблицы по символу "_"
+        String[] parts = tableName.split("_");
 
-//    @Transactional
-//    public void importDataFromCSV(String filePath) {
-//        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-//            String line;
-//            boolean isFirstLine = true;
-//            while ((line = reader.readLine()) != null) {
-//                if (isFirstLine) {
-//                    isFirstLine = false;
-//                    continue; // пропустить заголовок
-//                }
-//
-//                String[] data = line.split(";");
-//                // Пример: Предполагается, что порядок колонок в CSV соответствует таблице dm_f101_round_f_v2
-//
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+        // Строим результирующую строку
+        StringBuilder result = new StringBuilder();
+        for (String part : parts) {
+            // Преобразуем первую букву к верхнему регистру и добавляем к результату
+            if (!part.isEmpty()) {
+                result.append(Character.toUpperCase(part.charAt(0)));
+                if (part.length() > 1) {
+                    result.append(part.substring(1).toLowerCase());
+                }
+            }
+        }
 
+        return result.toString();
+    }
+
+    private String determineTableName(String baseName) {
+
+        String queryStr = "SELECT COUNT(*) FROM information_schema.tables WHERE table_name LIKE :baseName";
+        Query query = entityManager.createNativeQuery(queryStr);
+        query.setParameter("baseName", baseName + "_v%");
+        Long count = (Long) query.getSingleResult();
+
+        return baseName + "_v" + (count + 2);
+    }
+
+    @Transactional
+    private void createTable(String tableName, String originalTableName, String schemaName) {
+        entityManager.createNativeQuery("CREATE TABLE IF NOT EXISTS " +schemaName +"."+ tableName + " AS SELECT * FROM " + schemaName +"."+ originalTableName+" WHERE 1 = 0")
+                .executeUpdate();
+    }
+
+    private void sendData(String filePath, String versionedTableName, String schemaName){
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+
+            String line;
+            boolean headerSkipped = false;
+
+            while ((line = reader.readLine()) != null) {
+                if (!headerSkipped) {
+                    headerSkipped = true;
+                    continue;
+                }
+
+                String[] columns = line.split(";");
+
+                for (int i = 0; i < columns.length; i++) {
+                    if (columns[i].isEmpty()) {
+                        columns[i] = null;
+                    }
+                }
+
+
+                StringBuilder sqlBuilder = new StringBuilder();
+                sqlBuilder.append("INSERT INTO ").append(schemaName).append(".").append(versionedTableName).append(" VALUES (");
+
+                for (int i = 0; i < columns.length; i++) {
+                    if (i > 0) {
+                        sqlBuilder.append(", ");
+                    }
+                    if (columns[i] == null) {
+                        sqlBuilder.append("null");
+                    } else if (isNumeric(columns[i])) {
+                        sqlBuilder.append(columns[i]);
+                    } else {
+                        sqlBuilder.append("'").append(columns[i]).append("'");
+                    }
+                }
+
+                sqlBuilder.append(")");
+
+
+                entityManager.createNativeQuery(sqlBuilder.toString()).executeUpdate();
+            }
+
+            System.out.println("Данные успешно импортированы из CSV в таблицу " + versionedTableName);
+
+        } catch (IOException e) {
+            etlLoggingService.logProcessError("Import data Failed ", e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }

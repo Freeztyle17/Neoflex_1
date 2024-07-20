@@ -2,6 +2,7 @@ package ru.fedotov.etlprocess.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.fedotov.etlprocess.model.EtlLog;
@@ -15,7 +16,7 @@ public class EtlLoggingService {
 
     @PersistenceContext
     private EntityManager entityManager;
-
+    @Transactional
     void logProcessStart(String processName) {
         Timestamp startTime = new Timestamp(System.currentTimeMillis());
         entityManager.createNativeQuery(
@@ -25,6 +26,7 @@ public class EtlLoggingService {
                 .executeUpdate();
     }
 
+    @Transactional
     void logProcessEnd(String processName, String status) {
         Timestamp endTime = new Timestamp(System.currentTimeMillis());
         entityManager.createNativeQuery(
@@ -34,7 +36,8 @@ public class EtlLoggingService {
                 .setParameter(3, status)
                 .executeUpdate();
     }
-
+    
+    @Transactional
     void logProcessError(String processName, String errorMessage) {
         entityManager.createNativeQuery(
                         "INSERT INTO logs.etl_logs (process_name, oper_time, status) VALUES (?, NOW(), ?)")
