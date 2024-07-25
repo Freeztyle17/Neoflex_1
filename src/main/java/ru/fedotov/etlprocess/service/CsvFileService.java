@@ -160,13 +160,11 @@ public class CsvFileService {
     }
 
     public String convertTableNameToClassName(String tableName) {
-        // Разбиваем имя таблицы по символу "_"
         String[] parts = tableName.split("_");
 
-        // Строим результирующую строку
         StringBuilder result = new StringBuilder();
         for (String part : parts) {
-            // Преобразуем первую букву к верхнему регистру и добавляем к результату
+
             if (!part.isEmpty()) {
                 result.append(Character.toUpperCase(part.charAt(0)));
                 if (part.length() > 1) {
@@ -237,7 +235,7 @@ public class CsvFileService {
                 entityManager.createNativeQuery(sqlBuilder.toString()).executeUpdate();
             }
 
-            System.out.println("Данные успешно импортированы из CSV в таблицу " + versionedTableName);
+            System.out.println("Import data successful - " + versionedTableName);
 
         } catch (IOException e) {
             etlLoggingService.logProcessError("Import data Failed ", e.getMessage());
