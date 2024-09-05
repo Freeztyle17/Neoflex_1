@@ -26,18 +26,20 @@
 
 Затем вы узнаёте от Аналитика в банке, что пакет (или процедуру) расчёта витрины 101-й формы «dm.fill_f101_round_f» необходимо доработать. Необходимо сделать расчёт полей витрины «dm.dm_f101_round_f» по формулам:
 
-«BALANCE_OUT_RUB»
- > для счетов с CHARACTERISTIC = 'A' и currency_code '643' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB - TURN_CRE_RUB + TURN_DEB_RUB;
+«BALANCE_OUT_RUB» для счетов с:
+ > CHARACTERISTIC = 'A' и currency_code '643' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB - TURN_CRE_RUB + TURN_DEB_RUB;
 > 
- > для счетов с CHARACTERISTIC = 'A' и currency_code '810' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB - TURN_CRE_RUB + TURN_DEB_RUB;
+ > CHARACTERISTIC = 'A' и currency_code '810' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB - TURN_CRE_RUB + TURN_DEB_RUB;
 > 
- > для счетов с CHARACTERISTIC = 'P' и currency_code '643' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB + TURN_CRE_RUB - TURN_DEB_RUB;
+ > CHARACTERISTIC = 'P' и currency_code '643' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB + TURN_CRE_RUB - TURN_DEB_RUB;
 > 
- > для счетов с CHARACTERISTIC = 'P' и currency_code '810' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB + TURN_CRE_RUB - TURN_DEB_RUB;	
+ > CHARACTERISTIC = 'P' и currency_code '810' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB + TURN_CRE_RUB - TURN_DEB_RUB;	
 
-«BALANCE_OUT_VAL»	
-для счетов с CHARACTERISTIC = 'A' и currency_code не '643' и не '810' рассчитать BALANCE_OUT_VAL = BALANCE_IN_VAL - TURN_CRE_VAL + TURN_DEB_VAL;	
-для счетов с CHARACTERISTIC = 'P' и currency_code не '643' и не '810'  рассчитать BALANCE_OUT_VAL = BALANCE_IN_VAL + TURN_CRE_VAL - TURN_DEB_VAL;	
+«BALANCE_OUT_VAL» для счетов с:
+ > CHARACTERISTIC = 'A' и currency_code не '643' и не '810' рассчитать BALANCE_OUT_VAL = BALANCE_IN_VAL - TURN_CRE_VAL + TURN_DEB_VAL;
+>
+ > CHARACTERISTIC = 'P' и currency_code не '643' и не '810'  рассчитать BALANCE_OUT_VAL = BALANCE_IN_VAL + TURN_CRE_VAL - TURN_DEB_VAL;	
+>
 
 «BALANCE_OUT_TOTAL»	
-рассчитать BALANCE_OUT_TOTAL как BALANCE_OUT_VAL + BALANCE_OUT_RUB
+ > рассчитать BALANCE_OUT_TOTAL как BALANCE_OUT_VAL + BALANCE_OUT_RUB
