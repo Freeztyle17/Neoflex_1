@@ -28,8 +28,11 @@
 
 «BALANCE_OUT_RUB»
  > для счетов с CHARACTERISTIC = 'A' и currency_code '643' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB - TURN_CRE_RUB + TURN_DEB_RUB;
+> 
  > для счетов с CHARACTERISTIC = 'A' и currency_code '810' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB - TURN_CRE_RUB + TURN_DEB_RUB;
+> 
  > для счетов с CHARACTERISTIC = 'P' и currency_code '643' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB + TURN_CRE_RUB - TURN_DEB_RUB;
+> 
  > для счетов с CHARACTERISTIC = 'P' и currency_code '810' рассчитать BALANCE_OUT_RUB = BALANCE_IN_RUB + TURN_CRE_RUB - TURN_DEB_RUB;	
 
 «BALANCE_OUT_VAL»	
